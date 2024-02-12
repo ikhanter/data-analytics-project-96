@@ -27,10 +27,7 @@ with cte0 as (
 ),
 
 cte1 as (
-    select distinct on (
-        visit_date, utm_source, utm_medium,
-        utm_campaign
-    )
+    select 
         utm_source,
         utm_medium,
         utm_campaign,
@@ -105,9 +102,9 @@ left join ads
         and lower(cte1.utm_campaign) = lower(ads.utm_campaign)
         and cte1.visit_date = ads.campaign_date
 order by
-    revenue desc nulls last,
-    visit_date asc,
-    visitors_count desc,
-    utm_source asc,
-    utm_medium asc,
-    utm_campaign asc;
+    cte1.revenue desc nulls last,
+    cte1.visit_date asc,
+    cte1.visitors_count desc,
+    cte1.utm_source asc,
+    cte1.utm_medium asc,
+    cte1.utm_campaign asc;
