@@ -1,18 +1,36 @@
-with cte as (select distinct on (visit_date, utm_source, utm_medium, utm_campaign)
-	to_char(s.visit_date, 'YYYY-MM-DD') as visit_date,
-	s.source as utm_source,
-	s.medium as utm_medium,
-	s.campaign as utm_campaign,
-	count(s.visitor_id) as visitors_count,
-	count(l.lead_id) as leads_count,
-	count(case when l.closing_reason = 'Успешно реализовано' or l.status_id = 142 then 1 end) as purchases_count,
-	sum(l.amount) as revenue
-from sessions s
-left join leads l on s.visitor_id = l.visitor_id and s.visit_date <= l.created_at
-where s.medium in ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
-group by to_char(s.visit_date, 'YYYY-MM-DD'), s.source, s.medium, s.campaign
-order by 
-	visit_date desc
+with cte0 as (
+    select distinct on (s.visitor_id)
+        s.visitor_id as visitor_id,
+        s.visit_date as visit_date,
+        s.source as utm_source,
+        s.medium as utm_medium,
+        s.campaign as utm_campaign,
+        l.lead_id as lead_id,
+        l.created_at as created_at,
+        l.amount as amount,
+        l.closing_reason as closing_reason,
+        l.status_id as status_id
+    from sessions as s
+    left join
+        leads as l
+        on s.visitor_id = l.visitor_id and s.visit_date <= l.created_at
+    where s.medium in ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
+    order by
+        s.visitor_id asc,
+        s.visit_date desc
+), cte1 as (select distinct on (visit_date, utm_source, utm_medium, utm_campaign)
+	to_char(visit_date, 'YYYY-MM-DD') as visit_date,
+	utm_source,
+	utm_medium,
+	utm_campaign,
+	count(visitor_id) as visitors_count,
+	count(lead_id) as leads_count,
+	count(case when closing_reason = 'Успешно реализовано' or status_id = 142 then 1 end) as purchases_count,
+	sum(amount) as revenue
+	from cte0
+	group by to_char(visit_date, 'YYYY-MM-DD'), utm_source, utm_medium, utm_campaign
+	order by 
+		visit_date desc
 ), ads as (
 	select utm_source, utm_medium, utm_campaign, sum(daily_spent) as total_cost
 	from vk_ads
@@ -23,16 +41,16 @@ order by
 	group by utm_source, utm_medium, utm_campaign
 )
 select 
-	cte.visit_date,
-	cte.utm_source,
-	cte.utm_medium,
-	cte.utm_campaign,
-	cte.visitors_count,
+	cte1.visit_date,
+	cte1.utm_source,
+	cte1.utm_medium,
+	cte1.utm_campaign,
+	cte1.visitors_count,
 	ads.total_cost,
-	cte.leads_count,
-	cte.purchases_count,
-	cte.revenue
-from cte left join ads on lower(cte.utm_source) = lower(ads.utm_source) and
-	lower(cte.utm_medium) = lower(ads.utm_medium) and lower(cte.utm_campaign) = lower(ads.utm_campaign)
+	cte1.leads_count,
+	cte1.purchases_count,
+	cte1.revenue
+from cte1 left join ads on lower(cte1.utm_source) = lower(ads.utm_source) and
+	lower(cte1.utm_medium) = lower(ads.utm_medium) and lower(cte1.utm_campaign) = lower(ads.utm_campaign)
 order by revenue desc nulls last, visit_date, visitors_count desc, utm_source, utm_medium, utm_campaign
 ;
