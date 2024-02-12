@@ -42,10 +42,10 @@ with cte0 as (
 )
 select 
 	cte1.visit_date,
+	cte1.visitors_count,
 	cte1.utm_source,
 	cte1.utm_medium,
 	cte1.utm_campaign,
-	cte1.visitors_count,
 	ads.total_cost,
 	cte1.leads_count,
 	cte1.purchases_count,
