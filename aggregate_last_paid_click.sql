@@ -27,7 +27,7 @@ with cte0 as (
 ),
 
 cte1 as (
-    select 
+    select
         utm_source,
         utm_medium,
         utm_campaign,
