@@ -28,10 +28,7 @@ with cte0 as (
 ),
 
 cte1 as (
-    select distinct on (
-        visit_date, utm_source, utm_medium,
-        utm_campaign
-    )
+    select 
         utm_source,
         utm_medium,
         utm_campaign,
@@ -106,23 +103,24 @@ left join ads
         and lower(cte1.utm_campaign) = lower(ads.utm_campaign)
         and cte1.visit_date = ads.campaign_date
 order by
-    revenue desc nulls last,
-    visit_date asc,
-    visitors_count desc,
-    utm_source asc,
-    utm_medium asc,
-    utm_campaign asc;
--- CUSTOM SQL для поля "cpu" в таблице "Метрики". Аналогичные расчеты для других полей
-case when sum(visitors_count) = 0 then 0 else round(
-  sum(total_cost) / sum(visitors_count), 
-  2
-) end
+    cte1.revenue desc nulls last,
+    cte1.visit_date asc,
+    cte1.visitors_count desc,
+    cte1.utm_source asc,
+    cte1.utm_medium asc,
+    cte1.utm_campaign asc;
+-- CUSTOM SQL для поля "cpu" в таблице "Метрики". Аналогично для других полей
+select
+    case when sum(visitors_count) = 0 then 0 else round(
+        sum(total_cost) / sum(visitors_count),
+        2
+    ) end as cpu
+from dataset;
 -- CUSTOM SQL для поля "выручка" в таблице "Окупаемость рекламы"
-SUM(
-  case when revenue is not null then revenue else 0 end
-) 
+select SUM(
+    COALESCE (revenue, 0)
+) as income from dataset;
 -- CUSTOM SQL для поля "прибыль" в таблице "Окупаемость рекламы"
-SUM(
-  case when revenue is not null then revenue else 0 end
-) - sum(total_cost)
-
+select SUM(
+    COALESCE (revenue, 0)
+) - SUM(total_cost) as profit from dataset;
