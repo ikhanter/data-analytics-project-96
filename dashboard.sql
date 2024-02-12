@@ -28,7 +28,7 @@ with cte0 as (
 ),
 
 cte1 as (
-    select 
+    select
         utm_source,
         utm_medium,
         utm_campaign,
@@ -117,10 +117,10 @@ select
     ) end as cpu
 from dataset;
 -- CUSTOM SQL для поля "выручка" в таблице "Окупаемость рекламы"
-select SUM(
-    COALESCE (revenue, 0)
+select sum(
+    coalesce(revenue, 0)
 ) as income from dataset;
 -- CUSTOM SQL для поля "прибыль" в таблице "Окупаемость рекламы"
-select SUM(
-    COALESCE (revenue, 0)
-) - SUM(total_cost) as profit from dataset;
+select sum(
+    coalesce(revenue, 0)
+) - sum(total_cost) as profit from dataset;
