@@ -19,26 +19,26 @@ with cte0 as (
         s.visitor_id asc,
         s.visit_date desc
 ), cte1 as (select distinct on (visit_date, utm_source, utm_medium, utm_campaign)
-	to_char(visit_date, 'YYYY-MM-DD') as visit_date,
-	utm_source,
-	utm_medium,
-	utm_campaign,
-	count(visitor_id) as visitors_count,
-	count(lead_id) as leads_count,
-	count(case when closing_reason = 'Успешно реализовано' or status_id = 142 then 1 end) as purchases_count,
-	sum(amount) as revenue
+		to_char(visit_date, 'YYYY-MM-DD') as visit_date,
+		utm_source,
+		utm_medium,
+		utm_campaign,
+		count(visitor_id) as visitors_count,
+		count(lead_id) as leads_count,
+		count(case when closing_reason = 'Успешно реализовано' or status_id = 142 then 1 end) as purchases_count,
+		sum(amount) as revenue
 	from cte0
 	group by to_char(visit_date, 'YYYY-MM-DD'), utm_source, utm_medium, utm_campaign
 	order by 
 		visit_date desc
 ), ads as (
-	select utm_source, utm_medium, utm_campaign, sum(daily_spent) as total_cost
+	select to_char(campaign_date, 'YYYY-MM-DD') as campaign_date, utm_source, utm_medium, utm_campaign, sum(daily_spent) as total_cost
 	from vk_ads
-	group by utm_source, utm_medium, utm_campaign
+	group by to_char(campaign_date, 'YYYY-MM-DD'), utm_source, utm_medium, utm_campaign
 	union
-	select utm_source, utm_medium, utm_campaign, sum(daily_spent) as total_cost
+	select to_char(campaign_date, 'YYYY-MM-DD') as campaign_date, utm_source, utm_medium, utm_campaign, sum(daily_spent) as total_cost
 	from ya_ads
-	group by utm_source, utm_medium, utm_campaign
+	group by to_char(campaign_date, 'YYYY-MM-DD'), utm_source, utm_medium, utm_campaign
 )
 select 
 	cte1.visit_date,
@@ -51,6 +51,7 @@ select
 	cte1.purchases_count,
 	cte1.revenue
 from cte1 left join ads on lower(cte1.utm_source) = lower(ads.utm_source) and
-	lower(cte1.utm_medium) = lower(ads.utm_medium) and lower(cte1.utm_campaign) = lower(ads.utm_campaign)
+	lower(cte1.utm_medium) = lower(ads.utm_medium) and lower(cte1.utm_campaign) = lower(ads.utm_campaign) and 
+	cte1.visit_date = ads.campaign_date
 order by revenue desc nulls last, visit_date, visitors_count desc, utm_source, utm_medium, utm_campaign
 ;
